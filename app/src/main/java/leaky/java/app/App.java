@@ -11,7 +11,7 @@ import com.gremlin.failureflags.*;
 
 public class App {
     public static String getGreeting() {
-        return "Hello World!";
+        return "Hello World! ";
     }
 
     public static void main(String[] args) {
