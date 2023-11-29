@@ -74,16 +74,3 @@ spec:
           ## REGION is the name of the region or data center you're deploying into (for targeting)
           - name: REGION
             value: "demo"
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: demo-entrypoint
-# spec:
-#   type: NodePort
-#   selector:
-#     app: leaky-app-demo
-#   ports:
-#    - port: 3000
-#      targetPort: 3000
-#      nodePort: 30001
