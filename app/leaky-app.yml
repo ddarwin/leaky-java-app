@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-gremlin-secret
+type: Opaque
+data:
+  ## Base64 Encoded Gremlin Team Id
+  team_id: N2QyNmU5ODQtNjU5Yi01ODU3LWFhYmItNzQ0ZjI3OTE1MDU1
+  ## Base64 Encoded Gremlin Team Certificate
+  team_certificate: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tTUlJQm16Q0NBVUNnQXdJQkFnSUJBVEFLQmdncWhrak9QUVFEQWpCSE1TTXdJUVlEVlFRRERCcEhjbVZ0YkdsdUlFTnNhV1Z1ZENCRFpYSjBhV1pwWTJGMFpURU9NQXdHQTFVRUN3d0ZTRzl2YkdreEVEQU9CZ05WQkFvTUIwUnZkV0pzWlVRd0hoY05Nak13T1RBMU1UZzBOalU0V2hjTk1qUXdPVEEwTVRnME5qVTRXakJITVNNd0lRWURWUVFEREJwSGNtVnRiR2x1SUVOc2FXVnVkQ0JEWlhKMGFXWnBZMkYwWlRFT01Bd0dBMVVFQ3d3RlNHOXZiR2t4RURBT0JnTlZCQW9NQjBSdmRXSnNaVVF3V1RBVEJnY3Foa2pPUFFJQkJnZ3Foa2pPUFFNQkJ3TkNBQVN5TE4yTE5IQ1FHdTRyOHE3QWM4VWhseS9vbVZhc1hjOFZTWnJ1dnorQ2U1WmxzUzNJeGlWazJUTHd2TXY4a0RuZHhJRjRVb3ZPTGl5QWRLelBGUTVLb3gwd0d6QUpCZ05WSFJNRUFqQUFNQTRHQTFVZER3RUIvd1FFQXdJSGdEQUtCZ2dxaGtqT1BRUURBZ05KQURCR0FpRUE0V240NU1pMy81VGFkMGMzWjNGK0lqazg2MTZvQ1gvRWZTMVVKQy9ENk9ZQ0lRRDlWOHgwVjhYWmRycmlCYUxOL083VUN3YU5uSXQwRHRVT1ZUc1pNazFJdVE9PS0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=
+  ## Gremlin Team Certificate
+  team_private_key: ICAtLS0tLUJFR0lOIEVDIFBSSVZBVEUgS0VZLS0tLS1NSGNDQVFFRUlNbVpIWWZTYVc0SHZ1NFNaQVNXMnNwWXFCYzA5SmRMcTZuR3QvZXRiTEhYb0FvR0NDcUdTTTQ5QXdFSG9VUURRZ0FFc2l6ZGl6UndrQnJ1Sy9LdXdIUEZJWmN2NkpsV3JGM1BGVW1hN3I4L2dudVdaYkV0eU1ZbFpOa3k4THpML0pBNTNjU0JlRktMemk0c2dIU3N6eFVPU2c9PS0tLS0tRU5EIEVDIFBSSVZBVEUgS0VZLS0tLS0=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leaky-app-demo
+  labels:
+    app: leaky-app-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leaky-demo-app
+  template:
+    metadata:
+      labels:
+        app: leaky-demo-app
+    spec:
+      containers:
+       - name: leaky-demo-app
+         image: leakyjavaapp:latest
+         imagePullPolicy: Never
+         env:
+          ## FAILURE_FLAGS_ENABLED
+          - name: FAILURE_FLAGS_ENABLED
+            value: "true"
+
+       ## THIS CONTAINER IS THE SIDECAR
+       - name: gremlin
+         image: gremlin/failure-flags-sidecar:latest
+         imagePullPolicy: Never
+         env:
+          ## GREMLIN_SIDECAR_ENABLED
+          - name: GREMLIN_SIDECAR_ENABLED
+            value: "true"
+          ## GREMLIN_API_ENDPOINT_URL
+          - name: GREMLIN_API_ENDPOINT_URL
+            value: "https://beta.gremlin.com/v1"
+          ## GREMLIN_TEAM_ID
+          - name: GREMLIN_TEAM_ID
+            valueFrom:
+              secretKeyRef:
+                name: example-gremlin-secret
+                key: team_id
+          ## GREMLIN_TEAM_CERTIFICATE
+          - name: GREMLIN_TEAM_CERTIFICATE
+            valueFrom:
+              secretKeyRef:
+                name: example-gremlin-secret
+                key: team_certificate
+          ## GREMLIN_TEAM_PRIVATE_KEY
+          - name: GREMLIN_TEAM_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: example-gremlin-secret
+                key: team_private_key
+          ## GREMLIN_DEBUG will enable debug logging to standard out of the sidecar
+          - name: GREMLIN_DEBUG
+            value: "true"
+          ## SERVICE_NAME is the name of the application you're connecting to Gremlin
+          - name: SERVICE_NAME
+            value: "ddarwin-leaky-k8s-svc"
+          ## REGION is the name of the region or data center you're deploying into (for targeting)
+          - name: REGION
+            value: "demo"
