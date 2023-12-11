@@ -27,7 +27,7 @@ public class App {
         
         final List<Integer> NUMBERS = new ArrayList<>();
         for (int i = 1; i > 0; i++) {
-            activeExperiments = gremlin.invoke(new FailureFlag("ddarwin-java-ff", Map.of("method", "GET")));
+            activeExperiments = gremlin.invoke(new FailureFlag("sample-java-ff", Map.of("method", "GET")));
             if (activeExperiments != null && activeExperiments.length > 0){
                 NUMBERS.add(i);
                 System.out.println("Leaking the Number array, size is now "+NUMBERS.size());
